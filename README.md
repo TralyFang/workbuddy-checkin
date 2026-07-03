@@ -8,7 +8,8 @@
 workbuddy-checkin/
 ├── scripts/
 │   ├── checkin_mac.sh          # macOS 签到主脚本
-│   └── get_window_id.swift     # Swift 工具：获取窗口 ID 用于精确截图
+│   ├── get_window_id.swift     # Swift 工具：获取窗口 ID 用于精确截图
+│   └── setup_keychain.sh       # 将登录密码存入 Keychain（首次运行）
 ├── install.sh                  # 一键安装定时任务（自动适配项目路径）
 ├── uninstall.sh                # 一键卸载定时任务
 ├── screenshots/                # 签到截图保存目录
@@ -33,8 +34,9 @@ brew install cliclick
 
 脚本 `scripts/checkin_mac.sh` 执行以下步骤：
 
-1. **随机延迟** — 等待 0~60 分钟（配合定时任务实现 8:10 ± 30 分钟的随机签到时间）
-2. **激活 WorkBuddy** — 通过 osascript 将 WorkBuddy 置于前台
+1. **随机延迟** — 等待 0~10 分钟（配合定时任务实现 8:10 ± 5 分钟的随机签到时间）
+2. **唤醒屏幕** — 通过 `caffeinate -u` 唤醒显示器，确保 GUI 操作可用
+3. **激活 WorkBuddy** — 通过 osascript 将 WorkBuddy 置于前台
 3. **点击坐标 (1554, 1406)** — 关闭可能存在的弹窗，避免遮挡
 4. **点击坐标 (1314, 1405)** — 点击头像位置，打开签到弹窗
 5. **等待 3 秒后点击坐标 (1363, 1006)** — 点击弹窗中的「今日签到」按钮
@@ -58,7 +60,12 @@ SKIP_RANDOM_DELAY=1 ./scripts/checkin_mac.sh
 
 ## 定时任务配置
 
-使用 macOS launchd 实现每天自动签到，触发时间为 7:40 + 随机延迟 0~60 分钟 = 实际签到时间 **8:10 ± 30 分钟**。
+使用 macOS launchd + pmset 实现每天自动签到：
+- **T-1 分钟** — `pmset` 定时唤醒 Mac（即使处于睡眠状态）
+- **T** — `launchd` 触发脚本，`caffeinate` 保持唤醒 + 自动解锁屏幕
+- **T ~ T+10 分钟** — 随机延迟 0~10 分钟后执行签到
+
+其中 T 为用户安装时设置的触发时间（默认 08:05）。
 
 ### 一键安装
 
@@ -66,18 +73,26 @@ SKIP_RANDOM_DELAY=1 ./scripts/checkin_mac.sh
 ./install.sh
 ```
 
-安装脚本会自动根据项目所在路径生成 plist 并加载到 launchd，无需手动修改路径。
+安装过程会交互式完成：
+1. 输入 Mac 登录密码（存入 Keychain，用于自动解锁屏幕 + sudo 设置唤醒）
+2. 设置每天触发时间（格式 HH:MM，直接回车默认 08:05）
+3. 自动设置 pmset 定时唤醒（提前 1 分钟）
+4. 生成 launchd plist 并加载定时任务
 
-### 查看任务状态
-
-```bash
-launchctl list | grep workbuddy
-```
+重复安装时会自动从 Keychain 读取密码，无需重复输入。
 
 ### 一键卸载
 
 ```bash
 ./uninstall.sh
+```
+
+卸载会清理：launchd 定时任务 + pmset 唤醒 + Keychain 密码，全部干净移除。
+
+### 查看任务状态
+
+```bash
+launchctl list | grep workbuddy
 ```
 
 ### 查看日志

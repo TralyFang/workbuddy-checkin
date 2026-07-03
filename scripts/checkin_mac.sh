@@ -9,9 +9,14 @@ SCREENSHOT_DIR="$(cd "$(dirname "$0")/../screenshots" && pwd)"
 LOG_DIR="$(cd "$(dirname "$0")/../logs" && mkdir -p "$(dirname "$0")/../logs" && pwd)"
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
 
-# 随机延迟 0~60 分钟（配合 launchd 在 7:40 触发，实际执行时间为 7:40~8:40，覆盖 8:10±30 分钟）
+# 防止 Mac 在脚本执行期间重新睡眠（最长保持 15 分钟）
+caffeinate -dims -t 900 &
+CAFFEINATE_PID=$!
+trap "kill $CAFFEINATE_PID 2>/dev/null" EXIT
+
+# 随机延迟 0~10 分钟（配合 launchd 在 8:05 触发，实际执行时间为 8:05~8:15，覆盖 8:10±5 分钟）
 if [ "${SKIP_RANDOM_DELAY:-0}" != "1" ]; then
-    RANDOM_DELAY=$((RANDOM % 3600))
+    RANDOM_DELAY=$((RANDOM % 600))
     DELAY_MINUTES=$((RANDOM_DELAY / 60))
     DELAY_SECONDS=$((RANDOM_DELAY % 60))
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] 随机延迟 ${DELAY_MINUTES}分${DELAY_SECONDS}秒后执行..."
@@ -19,6 +24,34 @@ if [ "${SKIP_RANDOM_DELAY:-0}" != "1" ]; then
 fi
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] 开始 WorkBuddy 签到..."
+
+# 0. 唤醒屏幕并解锁（防止息屏/锁屏导致 GUI 操作失败）
+echo "[0/5] 唤醒屏幕并检查锁屏状态..."
+caffeinate -u -t 2
+sleep 2
+
+# 检测是否处于锁屏状态，如果是则自动解锁
+SCREEN_LOCKED=$(python3 -c "
+import subprocess
+result = subprocess.run(['ioreg', '-n', 'Root', '-d1', '-a'], capture_output=True, text=True)
+print('1' if 'CGSSessionScreenIsLocked' in result.stdout else '0')
+" 2>/dev/null)
+
+if [ "$SCREEN_LOCKED" = "1" ]; then
+    echo "  🔓 检测到锁屏，尝试自动解锁..."
+    UNLOCK_PWD=$(security find-generic-password -s "com.workbuddy.checkin" -a "screen-unlock" -w 2>/dev/null)
+    if [ -n "$UNLOCK_PWD" ]; then
+        osascript -e "tell application \"System Events\" to keystroke \"$UNLOCK_PWD\""
+        sleep 0.5
+        osascript -e 'tell application "System Events" to keystroke return'
+        sleep 2
+        echo "  ✅ 已发送解锁密码"
+    else
+        echo "  ⚠️  未找到 Keychain 中的密码，请运行 scripts/setup_keychain.sh 设置"
+    fi
+else
+    echo "  ✅ 屏幕未锁定"
+fi
 
 # 1. 激活 WorkBuddy 应用
 echo "[1/5] 激活 WorkBuddy 应用..."
