@@ -2,8 +2,7 @@
 # setup_keychain.sh - 将登录密码安全存储到 macOS Keychain
 # 只需运行一次
 
-KEYCHAIN_SERVICE="com.workbuddy.checkin"
-KEYCHAIN_ACCOUNT="screen-unlock"
+. "$(cd "$(dirname "$0")" && pwd)/common.sh"
 
 echo "🔐 WorkBuddy 签到 - 设置屏幕解锁密码"
 echo "密码将安全存储在 macOS Keychain 中（加密存储，非明文）"
@@ -31,11 +30,14 @@ if [ -z "$PASSWORD" ]; then
     exit 1
 fi
 
-# 存入 Keychain
-security add-generic-password -s "$KEYCHAIN_SERVICE" -a "$KEYCHAIN_ACCOUNT" -w "$PASSWORD"
+# 先校验密码，再存入 Keychain
+if ! validate_login_password "$PASSWORD"; then
+    echo "❌ 登录密码校验失败，请确认输入的是当前 Mac 登录密码"
+    exit 1
+fi
 
-if [ $? -eq 0 ]; then
-    echo "✅ 密码已安全存储到 Keychain"
+if save_keychain_password "$PASSWORD"; then
+    echo "✅ 密码校验通过，已安全存储到 Keychain"
     echo "   服务名: $KEYCHAIN_SERVICE"
     echo "   账户名: $KEYCHAIN_ACCOUNT"
     echo ""

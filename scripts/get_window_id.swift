@@ -11,16 +11,33 @@ guard let windowList = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWi
     exit(1)
 }
 
+var selectedWindowID: Int?
+var selectedWindowArea = 0
+
 for window in windowList {
     guard let ownerName = window[kCGWindowOwnerName as String] as? String,
-          let windowID = window[kCGWindowNumber as String] as? Int else {
+          let windowID = window[kCGWindowNumber as String] as? Int,
+          let layer = window[kCGWindowLayer as String] as? Int,
+          let bounds = window[kCGWindowBounds as String] as? [String: Any],
+          let width = bounds["Width"] as? Int,
+          let height = bounds["Height"] as? Int else {
         continue
     }
-    if ownerName.contains(appName) {
-        print(windowID)
-        exit(0)
+
+    if !ownerName.contains(appName) || layer != 0 || width <= 0 || height <= 0 {
+        continue
+    }
+
+    let area = width * height
+    if area > selectedWindowArea {
+        selectedWindowArea = area
+        selectedWindowID = windowID
     }
 }
 
-// 未找到窗口
+if let selectedWindowID {
+    print(selectedWindowID)
+    exit(0)
+}
+
 exit(1)
