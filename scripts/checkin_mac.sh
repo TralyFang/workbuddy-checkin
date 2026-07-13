@@ -196,17 +196,29 @@ osascript -e 'tell application "WorkBuddy" to activate' >/dev/null 2>&1 \
 sleep 2
 
 # 2. 点击取消弹窗坐标，避免遮挡后续头像点击
-echo "[2/5] 点击坐标 (${CANCEL_POPUP_COORD})..."
+echo "[2.1/5] 点击坐标 (${CANCEL_POPUP_COORD})..."
 "$CLICLICK_BIN" "c:${CANCEL_POPUP_COORD}" || fail "点击取消弹窗坐标失败"
 sleep 1
 
 # 3. 点击头像位置，打开签到弹窗
-echo "[3/5] 点击坐标 (${AVATAR_ENTRY_COORD})..."
+echo "[3.1/5] 点击坐标 (${AVATAR_ENTRY_COORD})..."
 "$CLICLICK_BIN" "c:${AVATAR_ENTRY_COORD}" || fail "点击头像坐标失败"
+sleep 5
+
+# 2.2 点击取消弹窗坐标，避免遮挡后续头像点击
+echo "[2.2/5] 点击坐标 (${CANCEL_POPUP_COORD})..."
+"$CLICLICK_BIN" "c:${CANCEL_POPUP_COORD}" || fail "点击取消弹窗坐标失败"
+sleep 1
+
+# 3.2 点击头像位置，打开签到弹窗
+echo "[3.2/5] 点击坐标 (${AVATAR_ENTRY_COORD})..."
+"$CLICLICK_BIN" "c:${AVATAR_ENTRY_COORD}" || fail "点击头像坐标失败"
+sleep 5
+
+
 
 # 4. 等待 3 秒后点击签到按钮
 echo "[4/5] 等待 3 秒后点击坐标 (${CHECKIN_BUTTON_COORD})..."
-sleep 3
 "$CLICLICK_BIN" "c:${CHECKIN_BUTTON_COORD}" || fail "点击签到按钮坐标失败"
 
 # 5. 等待 5 秒后截图保存
