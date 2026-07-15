@@ -154,8 +154,8 @@ fi
 
 log "开始 WorkBuddy 签到..."
 
-# 0. 唤醒屏幕并解锁（防止息屏/锁屏导致 GUI 操作失败）
-echo "[0/5] 唤醒屏幕并检查锁屏状态..."
+# 1. 唤醒屏幕并解锁（防止息屏/锁屏导致 GUI 操作失败）
+echo "[1/10] 唤醒屏幕并检查锁屏状态..."
 caffeinate -u -t 2
 sleep 2
 
@@ -190,51 +190,51 @@ else
     echo "  ✅ 屏幕未锁定"
 fi
 
-# 1. 激活 WorkBuddy 应用
-echo "[1/5] 激活 WorkBuddy 应用..."
+# 2. 激活 WorkBuddy 应用
+echo "[2/10] 激活 WorkBuddy 应用..."
 osascript -e 'tell application "WorkBuddy" to activate' >/dev/null 2>&1 \
     || fail "激活 WorkBuddy 失败，请确认应用已安装且允许脚本控制"
 sleep 2
 
-# 2. 点击取消弹窗坐标，避免遮挡后续头像点击
-echo "[2.1/5] 点击取消弹窗坐标 (${CANCEL_POPUP_COORD})..."
+# 3. 点击取消弹窗坐标，避免遮挡后续头像点击
+echo "[3/10] 点击取消弹窗坐标 (${CANCEL_POPUP_COORD})..."
 "$CLICLICK_BIN" "c:${CANCEL_POPUP_COORD}" || fail "点击取消弹窗坐标失败"
 sleep 1
 
-# 2.1 如果是查看文档全窗口模式，需要关闭
-echo "[2.1/5] 点击文档窗口坐标 (${COLOSE_FULL_MODEL})..."
+# 4. 如果是查看文档全窗口模式，需要关闭
+echo "[4/10] 点击文档窗口坐标 (${COLOSE_FULL_MODEL})..."
 "$CLICLICK_BIN" "c:${COLOSE_FULL_MODEL}" || fail "点击关闭文档窗口坐标失败"
 sleep 3
 
-# 1.2 激活 WorkBuddy 应用
-echo "[1.2/5] 激活 WorkBuddy 应用..."
+# 5. 再次激活 WorkBuddy 应用
+echo "[5/10] 激活 WorkBuddy 应用..."
 osascript -e 'tell application "WorkBuddy" to activate' >/dev/null 2>&1 \
     || fail "激活 WorkBuddy 失败，请确认应用已安装且允许脚本控制"
 sleep 2
 
-# 3. 点击头像位置，打开签到弹窗
-echo "[3.1/5] 点击头像坐标 (${AVATAR_ENTRY_COORD})..."
+# 6. 第一次点击头像位置，打开签到弹窗
+echo "[6/10] 点击头像坐标 (${AVATAR_ENTRY_COORD})..."
 "$CLICLICK_BIN" "c:${AVATAR_ENTRY_COORD}" || fail "点击头像坐标失败"
 sleep 5
 
-# 2.2 点击取消弹窗坐标，避免遮挡后续头像点击
-echo "[2.2/5] 点击取消弹窗坐标 (${CANCEL_POPUP_COORD})..."
+# 7. 再次点击取消弹窗坐标，避免遮挡后续头像点击
+echo "[7/10] 点击取消弹窗坐标 (${CANCEL_POPUP_COORD})..."
 "$CLICLICK_BIN" "c:${CANCEL_POPUP_COORD}" || fail "点击取消弹窗坐标失败"
 sleep 1
 
-# 3.2 点击头像位置，打开签到弹窗
-echo "[3.2/5] 点击头像坐标 (${AVATAR_ENTRY_COORD})..."
+# 8. 第二次点击头像位置，打开签到弹窗
+echo "[8/10] 点击头像坐标 (${AVATAR_ENTRY_COORD})..."
 "$CLICLICK_BIN" "c:${AVATAR_ENTRY_COORD}" || fail "点击头像坐标失败"
 sleep 5
 
 
 
-# 4. 等待 3 秒后点击签到按钮
-echo "[4/5] 等待 3 秒后点击坐标 (${CHECKIN_BUTTON_COORD})..."
+# 9. 等待 3 秒后点击签到按钮
+echo "[9/10] 等待 3 秒后点击坐标 (${CHECKIN_BUTTON_COORD})..."
 "$CLICLICK_BIN" "c:${CHECKIN_BUTTON_COORD}" || fail "点击签到按钮坐标失败"
 
-# 5. 等待 5 秒后截图保存
-echo "[5/5] 等待 5 秒后截图..."
+# 10. 等待 5 秒后截图保存
+echo "[10/10] 等待 5 秒后截图..."
 sleep 5
 
 # 确保截图目录存在
