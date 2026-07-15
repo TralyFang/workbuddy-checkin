@@ -1,5 +1,5 @@
 #!/bin/bash
-# common.sh - WorkBuddy 签到脚本共享常量与辅助方法
+# common.sh - WorkBuddy 脚本共享常量与通用辅助方法
 
 # 脚本目录与项目根目录，供 install/uninstall/checkin 共用
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,6 +23,33 @@ WAKE_EVENT_DAYS="MTWRFSU"
 
 # Homebrew 安装的 cliclick 绝对路径，避免 launchd 环境缺少 PATH
 CLICLICK_BIN="/opt/homebrew/bin/cliclick"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+warn() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  $1"
+}
+
+fail() {
+    log "❌ $1" >&2
+    exit 1
+}
+
+require_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        fail "缺少依赖命令：$1"
+    fi
+}
+
+require_commands() {
+    local cmd
+
+    for cmd in "$@"; do
+        require_command "$cmd"
+    done
+}
 
 # 确保持久化状态目录存在
 ensure_state_dir() {

@@ -4,14 +4,6 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/common.sh"
 
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
-}
-
-warn() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  $1"
-}
-
 prompt_accessibility_permission() {
     swift "$SCRIPT_DIR/request_accessibility.swift" 2>/dev/null
 }
@@ -37,16 +29,9 @@ main() {
     echo "   2. 自动化（控制 System Events）"
     echo ""
 
-    require_commands=(swift osascript)
-    for cmd in "${require_commands[@]}"; do
-        if ! command -v "$cmd" >/dev/null 2>&1; then
-            echo "❌ 缺少依赖命令：$cmd" >&2
-            exit 1
-        fi
-    done
+    require_commands swift osascript
     if [ ! -x "$CLICLICK_BIN" ]; then
-        echo "❌ 未找到 cliclick：$CLICLICK_BIN" >&2
-        exit 1
+        fail "未找到 cliclick：$CLICLICK_BIN"
     fi
 
     echo "1/2 触发 bash 辅助功能权限..."
